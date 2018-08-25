@@ -1,0 +1,6 @@
+# blacklist everything
+*
+
+# whitelist select files
+!.gitignore
+!init.el
