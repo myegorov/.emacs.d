@@ -1,0 +1,134 @@
+
+#+STARTUP: overview
+#+TITLE: Emacs config
+#+CREATOR: Maksim Yegorov
+#+LANGUAGE: en
+#+OPTIONS: num:nil
+
+* Install
+
+=git clone https://github.com/myegorov/.emacs.d ~/.emacs.d=
+
+* Packages
+
+Autocomplete w/ helpfile:
+#+BEGIN_SRC emacs-lisp
+  (use-package which-key
+    :ensure t
+    :init
+    (which-key-mode))
+#+END_SRC
+
+* Theme
+
+Auto install =spacemacs= theme:
+#+BEGIN_SRC emacs-lisp
+  (unless (package-installed-p 'spacemacs-theme)
+    (package-refresh-contents)
+    (package-install 'spacemacs-theme))
+#+END_SRC
+
+Set transparency level:
+#+BEGIN_SRC emacs-lisp
+  ;;(set-frame-parameter (selected-frame) 'alpha '(<active> . <inactive>))
+  ;;(set-frame-parameter (selected-frame) 'alpha <both>)
+  (set-frame-parameter (selected-frame) 'alpha '(95 50))
+  (add-to-list 'default-frame-alist '(alpha 95 50))
+#+END_SRC
+
+Transparent background for terminal emulator:
+#+BEGIN_SRC emacs-lisp
+  (defun on-after-init ()
+    (unless (display-graphic-p (selected-frame))
+      (set-face-background 'default "unspecified-bg" (selected-frame))))
+  (add-hook 'window-setup-hook 'on-after-init)
+#+END_SRC
+
+* Shell
+
+Make =zsh= default:
+#+BEGIN_SRC emacs-lisp
+  (defvar my-term-shell "/usr/bin/zsh")
+  (defadvice ansi-term (before force-bash)
+    (interactive (list my-term-shell)))
+  (ad-activate 'ansi-term)
+#+END_SRC
+
+* Keybindings
+
+Launch terminal using =<super>-<return>=:
+#+BEGIN_SRC emacs-lisp
+  (global-set-key (kbd "<s-return>") 'ansi-term)
+  (put 'scroll-left 'disabled nil)
+#+END_SRC
+
+Switch window with =C-x o=; resize window with =M-<left|right|up|down>=:
+#+BEGIN_SRC emacs-lisp
+  (global-set-key (kbd "M-o") 'other-window)
+  (windmove-default-keybindings) ; S-<left|right|up|down> to switch windows
+
+  (global-set-key (kbd "<M-up>") 'shrink-window)
+  (global-set-key (kbd "<M-down>") 'enlarge-window)
+  (global-set-key (kbd "<M-left>") 'shrink-window-horizontally)
+  (global-set-key (kbd "<M-right>") 'enlarge-window-horizontally)
+#+END_SRC
+
+* Aliases
+
+Respond with =y/n= to prompts:
+#+BEGIN_SRC emacs-lisp
+  (defalias 'yes-or-no-p 'y-or-n-p)
+#+END_SRC
+
+* Misc
+
+No splash screen:
+#+BEGIN_SRC emacs-lisp
+  (setq inhibit-startup-message t)
+#+END_SRC
+
+Hide menu mar, scroll line by line, disable bell...
+#+BEGIN_SRC emacs-lisp
+  ;; in terminal
+  (unless (display-graphic-p)
+    (menu-bar-mode -1))
+  
+  ;; in gui
+  (when (window-system)
+    (scroll-bar-mode -1)
+    (tool-bar-mode -1)
+    (menu-bar-mode -1)
+    (global-hl-line-mode t))  ; highlight line under cursor
+
+  (setq scroll-conservatively 100)
+
+  (setq ring-bell-function 'ignore)
+#+END_SRC
+
+Move by visual (not logical) lines; sentences needn't be separated by double spaces:
+#+BEGIN_SRC emacs-lisp
+  (global-visual-line-mode t)
+
+  (setq sentence-end-double-space nil)
+  (xclip-mode 1)
+#+END_SRC
+
+No =backup~= or =#autosave#= files:
+#+BEGIN_SRC emacs-lisp
+  (setq make-backup-files nil)
+  (setq auto-save-default nil)
+#+END_SRC
+
+
+Share system clipboard with emacs:
+#+BEGIN_SRC emacs-lisp
+  (setq x-select-enable-clipboard t)
+#+END_SRC
+
+Line numbers
+#+BEGIN_SRC emacs-lisp
+;; ;; show line numbers
+;; ;; add space and solid line between line numbers and text
+;; (setq linum-format "%4d \u2502 ")
+;; (global-linum-mode t)
+#+END_SRC

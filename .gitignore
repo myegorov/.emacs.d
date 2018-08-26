@@ -4,3 +4,4 @@
 # whitelist select files
 !.gitignore
 !init.el
+!emacs-init.org
