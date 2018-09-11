@@ -29,11 +29,9 @@
  '(custom-safe-themes
    (quote
     ("bffa9739ce0752a37d9b1eee78fc00ba159748f50dc328af4be661484848e476" default)))
- '(ido-create-new-buffer (quote always))
- '(ido-enable-flex-matching t)
- '(ido-mode (quote both) nil (ido))
- '(ido-use-filename-at-point (quote guess))
- '(package-selected-packages (quote (spacemacs-theme which-key use-package xclip))))
+ '(package-selected-packages
+   (quote
+    (counsel org-bullets ace-jump-mode try js2-mode spacemacs-theme which-key use-package xclip))))
 
 (custom-set-faces
  ;; custom-set-faces was added by Custom.

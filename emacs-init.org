@@ -1,9 +1,10 @@
-
 #+STARTUP: overview
 #+TITLE: Emacs config
 #+CREATOR: Maksim Yegorov
 #+LANGUAGE: en
 #+OPTIONS: num:nil
+
+[[https://github.com/myegorov/.emacs.d][Repository]]
 
 * Install
 
@@ -11,13 +12,141 @@
 
 * Packages
 
+Source .zshrc or similar:
+#+BEGIN_SRC emacs-lisp
+  (setq shell-file-name "zsh")
+  (setq shell-command-switch "-ic")
+  (use-package exec-path-from-shell
+    :ensure t
+    :config
+    (exec-path-from-shell-initialize))
+#+END_SRC
+
+Org-mode eye candy:
+#+BEGIN_SRC emacs-lisp
+  (use-package org-bullets
+    :ensure t
+    :config 
+      (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
+#+END_SRC
+
 Autocomplete w/ helpfile:
 #+BEGIN_SRC emacs-lisp
   (use-package which-key
     :ensure t
-    :init
-    (which-key-mode))
+    :config (which-key-mode))
 #+END_SRC
+
+Try packages without installing:
+#+BEGIN_SRC emacs-lisp
+  (use-package try
+    :ensure t)
+#+END_SRC
+
+Move cursor to any location in buffer:
+#+BEGIN_SRC emacs-lisp
+  ;; defer loading until activated via C-. or similar
+  (use-package ace-jump-mode
+    :ensure t
+    :bind (("C-c C-." . ace-jump-word-mode)
+	   ("C-c C-," . ace-jump-char-mode)
+	   ("C-c C-;" . ace-jump-line-mode)))
+#+END_SRC
+
+Balance pairs of parens/braces/brackets etc. when programming:
+#+BEGIN_SRC emacs-lisp
+  (use-package smartparens-config
+      :ensure smartparens
+      :bind (:map smartparens-mode-map
+             ("C-M-a" . sp-beginning-of-sexp)
+             ("C-M-e" . sp-end-of-sexp)
+             ("C-x <down>" . sp-down-sexp)
+             ("C-x <up>" . sp-up-sexp))
+	     ;; wrap with C-M-<SPC>
+      :config
+      (progn
+	(show-smartparens-global-mode t)))
+
+  (add-hook 'prog-mode-hook 'turn-on-smartparens-strict-mode)
+  (add-hook 'markdown-mode-hook 'turn-on-smartparens-strict-mode)
+#+END_SRC
+
+Jump to definition (guess):
+#+BEGIN_SRC emacs-lisp
+  ;; install ag (https://github.com/ggreer/the_silver_searcher#installing)
+  (use-package dumb-jump
+    :ensure t
+    :bind (("C-M-g" . dumb-jump-go)
+           ("C-M-p" . dumb-jump-back)
+           ("C-M-," . dumb-jump-quick-look)))
+#+END_SRC
+
+Fuzzy file finder:
+#+BEGIN_SRC emacs-lisp
+  ;; must install fzf using package manager for the distro (e.g. pacman -S fzf)
+  ;; add to .zshrc to enable fzf find hidden files:
+  ;;    export FZF_DEFAULT_COMMAND='ag --hidden --ignore .git -g ""'
+  ;; invoke with M-x fzf
+  (use-package fzf
+    :ensure t)
+#+END_SRC
+
+Easily switch between windows with C-x o:
+#+BEGIN_SRC emacs-lisp
+  (use-package ace-window
+    :ensure t
+    :init
+    (progn
+      (global-set-key [remap other-window] 'ace-window)
+      ))
+#+END_SRC
+
+Install counsel, ivy and swiper.
+Use swiper search instead of interactive search (C-s):
+#+BEGIN_SRC emacs-lisp
+  (use-package counsel
+    :ensure t
+    :bind (
+	   ("M-x" . counsel-M-x)
+	   ("C-x C-f" . counsel-find-file))
+    :config
+    (progn
+      (define-key read-expression-map (kbd "C-r") 'counsel-expression-history)
+  
+      ))
+
+  (use-package ivy
+    :ensure t
+    :diminish (ivy-mode)
+    :bind (("C-x b" . ivy-switch-buffer)
+	   ("C-c C-r" . ivy-resume))
+    :config
+    (ivy-mode 1)
+    (setq ivy-use-virtual-buffers t)
+    (setq ivy-count-format "%d/%d")
+    (setq ivy-display-style 'fancy))
+
+
+  (use-package swiper
+    :ensure t
+    :bind (("C-s" . swiper)
+	   ("C-r" . swiper)
+      ))
+#+END_SRC
+
+
+
+JavaScript mode:
+#+BEGIN_SRC emacs-lisp
+  (use-package js2-mode
+    :ensure t
+    :mode ("\\.js\\'" . js2-mode)
+    :interpreter "node"
+    :config
+      (progn
+        (add-hook 'js2-mode-hook (lambda () (setq js2-basic-offset 2)))))
+#+END_SRC
+
 
 * Theme
 
@@ -43,6 +172,15 @@ Transparent background for terminal emulator:
       (set-face-background 'default "unspecified-bg" (selected-frame))))
   (add-hook 'window-setup-hook 'on-after-init)
 #+END_SRC
+
+* UI
+
+Start emacs frame full-screen:
+#+BEGIN_SRC emacs-lisp
+  (setq initial-frame-alist '((top . 0) (left . 0) (width . 177) (height . 53)))
+#+END_SRC
+
+
 
 * Shell
 
@@ -73,11 +211,21 @@ Switch window with =C-x o=; resize window with =M-<left|right|up|down>=:
   (global-set-key (kbd "<M-right>") 'enlarge-window-horizontally)
 #+END_SRC
 
+Bind Imenu to =M-i=:
+#+BEGIN_SRC emacs-lisp
+  (global-set-key (kbd "M-i") 'imenu)
+#+END_SRC
+
 * Aliases
 
 Respond with =y/n= to prompts:
 #+BEGIN_SRC emacs-lisp
   (defalias 'yes-or-no-p 'y-or-n-p)
+#+END_SRC
+
+ibuffer is more user-friendly for editing buffers:
+#+BEGIN_SRC emacs-lisp
+  (defalias 'list-buffers 'ibuffer-other-window)
 #+END_SRC
 
 * Misc
@@ -97,7 +245,7 @@ Hide menu mar, scroll line by line, disable bell...
   (when (window-system)
     (scroll-bar-mode -1)
     (tool-bar-mode -1)
-    (menu-bar-mode -1)
+    ;;(menu-bar-mode -1)
     (global-hl-line-mode t))  ; highlight line under cursor
 
   (setq scroll-conservatively 100)
@@ -125,10 +273,16 @@ Share system clipboard with emacs:
   (setq x-select-enable-clipboard t)
 #+END_SRC
 
-Line numbers
+Line numbers:
 #+BEGIN_SRC emacs-lisp
 ;; ;; show line numbers
 ;; ;; add space and solid line between line numbers and text
 ;; (setq linum-format "%4d \u2502 ")
 ;; (global-linum-mode t)
+(global-linum-mode)
+#+END_SRC
+
+Turn on highlight matching brackets when cursor is on one:
+#+BEGIN_SRC emacs-lisp
+  (show-paren-mode 1)
 #+END_SRC
