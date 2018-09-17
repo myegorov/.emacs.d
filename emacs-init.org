@@ -45,12 +45,10 @@ Try packages without installing:
 
 Move cursor to any location in buffer:
 #+BEGIN_SRC emacs-lisp
-  ;; defer loading until activated via C-. or similar
-  (use-package ace-jump-mode
+  ;; jump to char with M-s
+  (use-package avy
     :ensure t
-    :bind (("C-c C-." . ace-jump-word-mode)
-	   ("C-c C-," . ace-jump-char-mode)
-	   ("C-c C-;" . ace-jump-line-mode)))
+    :bind ("M-s" . avy-goto-char))
 #+END_SRC
 
 Balance pairs of parens/braces/brackets etc. when programming:
@@ -134,19 +132,48 @@ Use swiper search instead of interactive search (C-s):
       ))
 #+END_SRC
 
-
-
-JavaScript mode:
+Auto-complete with company-mode in all buffers:
 #+BEGIN_SRC emacs-lisp
-  (use-package js2-mode
+  ;; Completion will start automatically after you type a few letters.
+  ;; Use M-n and M-p to select, <return> to complete or <tab> to
+  ;; complete the common part. Search through the completions with C-s,
+  ;; C-r and C-o. Press M-(digit) to quickly complete with one of the
+  ;; first 10 candidates. Type M-x company-complete to initiate
+  ;; completion manually (or trigger via <Tab>). 
+
+  ;; When the completion candidates are shown, press <f1> to display the
+  ;; documentation for the selected candidate, or C-w to see its source.
+  ;; Not all back-ends support this.
+  (use-package company
     :ensure t
-    :mode ("\\.js\\'" . js2-mode)
-    :interpreter "node"
+    :diminish
     :config
-      (progn
-        (add-hook 'js2-mode-hook (lambda () (setq js2-basic-offset 2)))))
+    (add-hook 'after-init-hook 'global-company-mode)
+
+    ;; don't display candidates unless explicitly asked for
+    (setq company-idle-delay nil)
+    (global-set-key "\t" 'company-complete-common)
+
+    (use-package company-anaconda
+      :ensure t
+      :config
+      (add-to-list 'company-backends 'company-anaconda)))
 #+END_SRC
 
+Tree directory browser (turn on/off with "C-x C-n")
+#+BEGIN_SRC emacs-lisp
+  (use-package dired-sidebar
+    :ensure t
+    :bind (("C-x C-n" . dired-sidebar-toggle-sidebar))
+    :commands (dired-sidebar-toggle-sidebar))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+  (use-package ensime
+    :ensure t
+    :pin melpa-stable)
+
+#+END_SRC
 
 * Theme
 
@@ -285,4 +312,10 @@ Line numbers:
 Turn on highlight matching brackets when cursor is on one:
 #+BEGIN_SRC emacs-lisp
   (show-paren-mode 1)
+#+END_SRC
+
+Show line and column number at cursor by default:
+#+BEGIN_SRC emacs-lisp
+  (setq line-number-mode t)
+  (setq column-number-mode t)
 #+END_SRC

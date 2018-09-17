@@ -2,7 +2,9 @@
 (require 'package)
 (setq package-enable-at-startup nil)
 (add-to-list 'package-archives
-	     '("melpa" . "https://melpa.org/packages/")) 
+	     '("melpa" . "https://melpa.org/packages/"))
+(add-to-list 'package-archives
+             '("melpa-stable" . "https://stable.melpa.org/packages/") t)
 (package-initialize)
 
 ;; a package manager
@@ -31,7 +33,7 @@
     ("bffa9739ce0752a37d9b1eee78fc00ba159748f50dc328af4be661484848e476" default)))
  '(package-selected-packages
    (quote
-    (counsel org-bullets ace-jump-mode try js2-mode spacemacs-theme which-key use-package xclip))))
+    (company-mode counsel org-bullets ace-jump-mode try spacemacs-theme which-key use-package xclip))))
 
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
