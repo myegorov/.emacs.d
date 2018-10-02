@@ -1,4 +1,4 @@
-#+STARTUP: overview
++STARTUP: overview
 #+TITLE: Emacs config
 #+CREATOR: Maksim Yegorov
 #+LANGUAGE: en
@@ -11,6 +11,11 @@
 =git clone https://github.com/myegorov/.emacs.d ~/.emacs.d=
 
 * Packages
+
+For all packages, make sure they're installed:
+#+BEGIN_SRC emacs-lisp
+  (setq use-package-always-ensure t)
+#+END_SRC
 
 Source .zshrc or similar:
 #+BEGIN_SRC emacs-lisp
@@ -71,7 +76,7 @@ Balance pairs of parens/braces/brackets etc. when programming:
 
 Jump to definition (guess):
 #+BEGIN_SRC emacs-lisp
-  ;; install ag (https://github.com/ggreer/the_silver_searcher#installing)
+  ;; install ag (https://github.com/ggreer/the_silver_searcher)
   (use-package dumb-jump
     :ensure t
     :bind (("C-M-g" . dumb-jump-go)
@@ -168,20 +173,78 @@ Tree directory browser (turn on/off with "C-x C-n")
     :commands (dired-sidebar-toggle-sidebar))
 #+END_SRC
 
+Flycheck lints multiple languages (must install plugins for each!)
+#+BEGIN_SRC emacs-lisp
+  (use-package flycheck
+    :ensure t
+    :init (global-flycheck-mode))
+#+END_SRC
+
+Send buffer to interpreter with =isend-mode=.
+Open ansi-term (S-<Enter>) and start interpreter in the buffer.
+Make sure the term buffer is not read-only (C-c j C-x C-q).
+M-x isend-associate RET *ansi-term* RET
+C-<RET> will send a line (or active region) to ansi-term.
+#+BEGIN_SRC emacs-lisp
+  (use-package isend-mode
+    :ensure t)
+#+END_SRC
+
+Scala settings:
 #+BEGIN_SRC emacs-lisp
   (use-package ensime
     :ensure t
     :pin melpa-stable)
-
+  (setq
+    ensime-sbt-command "/usr/sbin/sbt"
+    sbt:program-name "/usr/sbin/sbt")
+  (use-package scala-mode
+    :interpreter
+    ("scala" . scala-mode))
+  (use-package sbt-mode
+    :commands sbt-start sbt-command
+    :config
+    ;; WORKAROUND: https://github.com/ensime/emacs-sbt-mode/issues/31
+    ;; allows using SPACE when in the minibuffer
+    (substitute-key-definition
+     'minibuffer-complete-word
+     'self-insert-command
+     minibuffer-local-completion-map))
 #+END_SRC
+
+* Python
+
+** Static analysis for Python
+
+Make sure to =pip install --upgrade flake8= and =pip install virtualenv= first. After installing =jedi=, 
+run =M-x jedi:install-server= in Emacs.
+#+BEGIN_SRC emacs-lisp
+  (use-package jedi
+    :ensure t
+    :init
+    (add-hook 'python-mode-hook 'jedi:setup)
+    (add-hook 'python-mode-hook 'jedi:ac-setup)
+    (add-to-list 'company-backends 'company-jedi)
+    :config
+    (use-package company-jedi
+      :ensure t
+      :init
+      (add-hook 'python-mode-hook (lambda () (add-to-list 'company-backends 'company-jedi)))
+      (setq company-jedi-python-bin "python")))
+#+END_SRC
+
+* Javascript
 
 * Theme
 
-Auto install =spacemacs= theme:
 #+BEGIN_SRC emacs-lisp
+  ;; spacemacs theme
   (unless (package-installed-p 'spacemacs-theme)
     (package-refresh-contents)
     (package-install 'spacemacs-theme))
+  ;; (use-package darkokai-theme
+  ;;   :ensure t
+  ;;   :config (load-theme 'darkokai t))
 #+END_SRC
 
 Set transparency level:
@@ -206,8 +269,6 @@ Start emacs frame full-screen:
 #+BEGIN_SRC emacs-lisp
   (setq initial-frame-alist '((top . 0) (left . 0) (width . 177) (height . 53)))
 #+END_SRC
-
-
 
 * Shell
 
@@ -288,10 +349,11 @@ Move by visual (not logical) lines; sentences needn't be separated by double spa
   (xclip-mode 1)
 #+END_SRC
 
-No =backup~= or =#autosave#= files:
+No backup~ or =autosave= files:
 #+BEGIN_SRC emacs-lisp
-  (setq make-backup-files nil)
-  (setq auto-save-default nil)
+  (setq make-backup-files nil
+        auto-save-default nil
+        create-lockfiles nil)
 #+END_SRC
 
 
@@ -312,6 +374,7 @@ Line numbers:
 Turn on highlight matching brackets when cursor is on one:
 #+BEGIN_SRC emacs-lisp
   (show-paren-mode 1)
+  (setq show-paren-delay 0.5)
 #+END_SRC
 
 Show line and column number at cursor by default:
