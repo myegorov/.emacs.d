@@ -233,6 +233,13 @@ Send line/region to REPL for multiple languages with C-<RET>:
 		      '(lambda ()
 			 (local-set-key (kbd "<C-return>") 'eir-eval-in-geiser)))
 
+    ;;; Racket support
+    (require 'geiser)
+    (require 'eval-in-repl-geiser)
+    (add-hook 'geiser-mode-hook
+      '(lambda ()
+        (local-set-key (kbd "<C-return>") 'eir-eval-in-geiser)))
+
     ;;; Python support
     ;; (require 'python) ; if not done elsewhere
     (require 'eval-in-repl-python)
@@ -265,7 +272,6 @@ Send line/region to REPL for multiple languages with C-<RET>:
     (define-key scala-mode-map (kbd "<C-return>") 'eir-eval-in-scala)
   )
 #+END_SRC
-
 * Common Lisp
 
 Prerequisites: install SBCL implementation of CLIPS and quicklisp.
@@ -282,13 +288,13 @@ Use M-x slime to fire up and connect to an inferior Lisp. SLIME will now automat
       (slime-setup)))
 #+END_SRC
 
-* Scheme
+* Scheme/Racket
 #+BEGIN_SRC emacs-lisp
   ;; Geiser, for Scheme REPL and autodoc;
   ;; use mit-scheme by default
   (use-package geiser
     :ensure t)
-  (setq geiser-active-implementations '(mit))
+  (setq geiser-active-implementations '(racket))
   ;;(setq scheme-program-name "csi -:c")          ; uncomment for Chicken scheme
   (add-hook 'scheme-mode-hook 'geiser-mode)
 #+END_SRC
@@ -406,6 +412,16 @@ Make =zsh= default:
 
 * Keybindings
 
+Remap movement commands to C-M {hjkl} to mimic vim:
+#+BEGIN_SRC emacs-lisp
+  (require 'bind-key)
+  (bind-keys*
+    ("C-M-k" . previous-line)
+    ("C-M-j" . next-line)
+    ("C-M-h" . backward-char)
+    ("C-M-l" . forward-char))
+#+END_SRC
+
 Launch terminal using =<super>-<return>=:
 #+BEGIN_SRC emacs-lisp
   (global-set-key (kbd "<s-return>") 'ansi-term)
@@ -463,12 +479,12 @@ Hide menu mar, scroll line by line, disable bell...
   ;; in terminal
   (unless (display-graphic-p)
     (menu-bar-mode -1))
-  
+
   ;; in gui
   (when (window-system)
     (scroll-bar-mode -1)
     (tool-bar-mode -1)
-    ;;(menu-bar-mode -1)
+    (menu-bar-mode -1)
     (global-hl-line-mode t))  ; highlight line under cursor
 
   (setq scroll-conservatively 100)
