@@ -27,6 +27,15 @@
    [default default default italic underline success warning error])
  '(ansi-color-names-vector
    ["#242424" "#e5786d" "#95e454" "#cae682" "#8ac6f2" "#333366" "#ccaa8f" "#f6f3e8"])
+ '(cider-auto-select-error-buffer t)
+ '(cider-repl-history-file "~/.emacs.d/cider-history")
+ '(cider-repl-history-size 5000)
+ '(cider-repl-pop-to-buffer-on-connect t)
+ '(cider-repl-result-prefix "; => ")
+ '(cider-repl-use-clojure-font-lock t)
+ '(cider-repl-use-pretty-printing nil)
+ '(cider-repl-wrap-history t)
+ '(cider-show-error-buffer t)
  '(compilation-message-face (quote default))
  '(custom-enabled-themes (quote (spacemacs-dark)))
  '(custom-safe-themes

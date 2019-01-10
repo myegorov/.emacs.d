@@ -1,8 +1,8 @@
-+STARTUP: overview
 #+TITLE: Emacs config
-#+CREATOR: Maksim Yegorov
-#+LANGUAGE: en
-#+OPTIONS: num:nil
+#+AUTHOR: Maksim Yegorov
+#+TOC: true
+#+DATE: Sun Dec  9 11:07:14 PST 2018
+
 
 [[https://github.com/myegorov/.emacs.d][Repository]]
 
@@ -56,24 +56,21 @@ Move cursor to any location in buffer:
     :bind ("M-s" . avy-goto-char))
 #+END_SRC
 
-Balance pairs of parens/braces/brackets etc. when programming:
+Balance pairs of parens/braces/brackets, highlight matching parens etc. when programming:
 #+BEGIN_SRC emacs-lisp
-  (use-package smartparens-config
-      :ensure smartparens
-      :bind (:map smartparens-mode-map
-             ("C-M-a" . sp-beginning-of-sexp)
-             ("C-M-e" . sp-end-of-sexp)
-             ("C-x <down>" . sp-down-sexp)
-             ("C-x <up>" . sp-up-sexp))
-	     ;; wrap with C-M-<SPC>
-      :config
-      (progn
-	(show-smartparens-global-mode t)))
+  (use-package smartparens
+    :diminish smartparens-mode
+    :config
+    (add-hook 'prog-mode-hook 'smartparens-mode))
 
-  (add-hook 'prog-mode-hook 'turn-on-smartparens-strict-mode)
-  (add-hook 'markdown-mode-hook 'turn-on-smartparens-strict-mode)
+  (use-package rainbow-delimiters
+    :config
+    (add-hook 'prog-mode-hook 'rainbow-delimiters-mode))
+
+  (add-hook 'prog-mode-hook 'electric-pair-mode)
 #+END_SRC
 
+Paredit tutorial: http://danmidwood.com/content/2014/11/21/animated-paredit.html
 #+BEGIN_SRC emacs-lisp
   (use-package paredit
     :ensure t
@@ -81,7 +78,11 @@ Balance pairs of parens/braces/brackets etc. when programming:
     (add-hook 'emacs-lisp-mode-hook 'enable-paredit-mode)
     (add-hook 'lisp-mode-hook 'enable-paredit-mode)
     ;; enable in the *scratch* buffer
-    (add-hook 'lisp-interaction-mode-hook 'enable-paredit-mode))
+    (add-hook 'lisp-interaction-mode-hook 'enable-paredit-mode)
+    (add-hook 'scheme-mode-hook           #'enable-paredit-mode)
+    (add-hook 'clojure-mode-hook          #'enable-paredit-mode)
+    (add-hook 'cider-repl-mode-hook #'enable-paredit-mode)
+)
 #+END_SRC
 
 Jump to definition (guess):
@@ -166,7 +167,7 @@ Auto-complete with company-mode in all buffers:
     (add-hook 'after-init-hook 'global-company-mode)
 
     ;; don't display candidates unless explicitly asked for
-    (setq company-idle-delay nil)
+    ;;(setq company-idle-delay nil)
     (global-set-key (kbd "C-TAB") 'company-complete-commobn)
 
     (use-package company-anaconda
@@ -272,6 +273,27 @@ Send line/region to REPL for multiple languages with C-<RET>:
     (define-key scala-mode-map (kbd "<C-return>") 'eir-eval-in-scala)
   )
 #+END_SRC
+
+* Project management
+With ==projectile==, you can jumpt to file/directory in project; grep in project; run make etc.:
+#+BEGIN_SRC emacs-lisp
+  (use-package projectile
+    :ensure t
+    :config
+    (define-key projectile-mode-map (kbd "s-p") 'projectile-command-map)
+    (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map)
+    (projectile-mode +1))
+#+END_SRC
+
+* Language Server
+
+#+BEGIN_SRC emacs-lisp
+;; (use-package eglot
+;;   :ensure t
+;;   :commands (eglot eglot-ensure)
+;;   :hook ((python-mode . eglot-ensure)))
+#+END_SRC
+
 * Common Lisp
 
 Prerequisites: install SBCL implementation of CLIPS and quicklisp.
@@ -288,15 +310,64 @@ Use M-x slime to fire up and connect to an inferior Lisp. SLIME will now automat
       (slime-setup)))
 #+END_SRC
 
+* Clojure
+#+BEGIN_SRC emacs-lisp
+(use-package clojure-mode
+  :ensure t
+  :config
+  (add-hook 'clojure-mode-hook #'paredit-mode)
+  (add-hook 'clojure-mode-hook #'subword-mode)
+  (add-hook 'clojure-mode-hook #'rainbow-delimiters-mode))
+
+;; extra syntax highlighting for clojure
+(use-package clojure-mode-extra-font-locking)
+
+;; integration with a Clojure REPL
+(use-package cider
+  :ensure t
+  :config
+  (setq nrepl-log-messages t)
+  ;; provides minibuffer documentation for the code you're typing into the repl
+  (add-hook 'cider-mode-hook #'eldoc-mode)
+  (add-hook 'cider-repl-mode-hook #'eldoc-mode)
+  (add-hook 'cider-repl-mode-hook #'paredit-mode)
+  (add-hook 'cider-repl-mode-hook #'rainbow-delimiters-mode)
+  :custom
+  ;; nice pretty printing
+  (cider-repl-use-pretty-printing nil)
+  ;; nicer font lock in REPL
+  (cider-repl-use-clojure-font-lock t)
+  ;; result prefix for the REPL
+  (cider-repl-result-prefix "; => ")
+  ;; never ending REPL history
+  (cider-repl-wrap-history t)
+  ;; looong history
+  (cider-repl-history-size 5000)
+  ;; persistent history
+  (cider-repl-history-file "~/.emacs.d/cider-history")
+  ;; error buffer pop up
+  (cider-show-error-buffer t)
+  (cider-auto-select-error-buffer t)
+  ;; go right to the REPL buffer when it's finished connecting
+  (cider-repl-pop-to-buffer-on-connect t))
+#+END_SRC
+
+
 * Scheme/Racket
 #+BEGIN_SRC emacs-lisp
   ;; Geiser, for Scheme REPL and autodoc;
   ;; use mit-scheme by default
   (use-package geiser
-    :ensure t)
-  (setq geiser-active-implementations '(racket))
-  ;;(setq scheme-program-name "csi -:c")          ; uncomment for Chicken scheme
-  (add-hook 'scheme-mode-hook 'geiser-mode)
+    :ensure t
+    :config
+    (defvar geiser-active-implementations)
+    (setq geiser-default-implementation '(racket)) ;; alternatively use mit/chicken
+    (setq geiser-active-implementations '(racket))
+    (setq geiser-mode-start-repl-p t)
+    ;; (setq geiser-repl-history-filename
+    ;;       "~/.emacs.d/geiser-history")
+    (add-hook 'scheme-mode-hook 'geiser-mode))
+
 #+END_SRC
 
 * Scala
@@ -324,46 +395,105 @@ Use M-x slime to fire up and connect to an inferior Lisp. SLIME will now automat
 
 * Python
 
-** Static analysis for Python
+* Javascript
 
-Make sure to =pip install --upgrade flake8= and =pip install virtualenv= first. After installing =jedi=, 
-run =M-x jedi:install-server= in Emacs.
+In JS indent to 2 spaces:
 #+BEGIN_SRC emacs-lisp
-  (use-package jedi
-    :ensure t
-    :init
-    (add-hook 'python-mode-hook 'jedi:setup)
-    (add-hook 'python-mode-hook 'jedi:ac-setup)
-    (add-to-list 'company-backends 'company-jedi)
-    :config
-    (use-package company-jedi
-      :ensure t
-      :init
-      (add-hook 'python-mode-hook (lambda () (add-to-list 'company-backends 'company-jedi)))
-      (setq company-jedi-python-bin "python")))
+  (setq-default js-indent-level 2)
 #+END_SRC
 
-* Javascript
-HTML with web-mode:
+JSON:
+#+BEGIN_SRC emacs-lisp
+  (use-package json-mode
+    :ensure    json-mode
+    :config    (bind-keys :map json-mode-map
+			  ("C-c i" . json-mode-beautify))
+    :mode      ("\\.\\(json\\)$" . json-mode))
+#+END_SRC
+
+JS2 mode improves on the built in JS mode:
+#+BEGIN_SRC emacs-lisp
+  (use-package js2-mode
+    :mode "\\.js\\'"
+    :init
+    (add-hook 'js2-mode-hook #'js2-imenu-extras-mode)
+    (add-hook 'js2-mode-hook (lambda () (tern-mode) (company-mode)))
+    :config
+    (setq-default js2-ignored-warnings     
+      '("msg.extra.trailing.comma")))
+#+END_SRC
+
+=js2-refactor= supports some useful refactoring options and builds on top of =js2-mode=:
+#+BEGIN_SRC emacs-lisp
+  (use-package js2-refactor
+    :after (js2-mode)
+    :config
+    (js2r-add-keybindings-with-prefix "C-c C-m")
+    (add-hook 'js2-mode-hook 'js2-refactor-mode))
+#+END_SRC
+
+Code browsing for JS (for =tern= you should first =npm install -g tern=,  or alternatively use =xref-js2=):
+#+BEGIN_SRC emacs-lisp
+  (use-package tern
+     :ensure t
+     :init 
+     (add-hook 'js2-mode-hook (lambda () (tern-mode t)))
+     (add-hook 'rjsx-mode-hook (lambda () (tern-mode t)))
+     :config
+       (use-package company-tern
+	  :ensure t
+	  :init (add-to-list 'company-backends 'company-tern)))
+
+    ;; (use-package xref-js2
+    ;;   :after (js2-mode)
+    ;;   :init
+    ;;   (add-hook 'js2-mode-hook (lambda () (add-hook 
+    ;;     'xref-backend-functions #'xref-js2-xref-backend nil t))))
+#+END_SRC
+
+RJSX mode improves on =js2-mode= and targets JSX:
+#+BEGIN_SRC emacs-lisp
+  (use-package rjsx-mode
+    :init
+    (add-to-list 'auto-mode-alist '("components?\\/.*\\.js\\'" . rjsx-mode))
+    (add-to-list 'auto-mode-alist '("containers?\\/.*\\.js\\'" . rjsx-mode))
+    :config
+    (add-hook 'rjsx-mode-hook (lambda () (tern-mode) (company-mode)))
+    (defadvice js-jsx-indent-line (after js-jsx-indent-line-after-hack activate)
+      "Workaround sgml-mode and follow airbnb component style."
+      (save-excursion
+	(beginning-of-line)
+	(if (looking-at-p "^ +\/?> *$")
+	    (delete-char sgml-basic-offset)))))
+#+END_SRC
+
+** Web mode
+
+Web mode handles html/css/js:
 #+BEGIN_SRC emacs-lisp
   (use-package web-mode
-      :ensure t
-      :config
-	     (add-to-list 'auto-mode-alist '("\\.html?\\'" . web-mode))
-	     (setq web-mode-engines-alist
-		   '(("django"    . "\\.html\\'")))
-	     (setq web-mode-ac-sources-alist
-	     '(("css" . (ac-source-css-property))
-	       ("html" . (ac-source-words-in-buffer ac-source-abbrev))))
-  (setq web-mode-enable-auto-closing t))
-  (setq web-mode-enable-auto-quoting t)
+    :mode ("\\.html\\'")
+    :config
+    (setq web-mode-markup-indent-offset 2)
+    (setq web-mode-engines-alist
+          '(("django" . "focus/.*\\.html\\'"))))
+#+END_SRC
 
-  (defun my-web-mode-hook ()
-      (setq web-mode-markup-indent-offset 2)
-      (setq web-mode-css-indent-offset 2)
-      (setq web-mode-code-indent-offset 2)
-      (setq web-mode-indent-style 2))
-  (add-hook 'web-mode-hook  'my-web-mode-hook)
+Paredit-like editing html:
+#+BEGIN_SRC emacs-lisp
+(use-package tagedit)
+#+END_SRC
+
+* Markdown
+
+Markdown support isn't built into Emacs, add it with =markdown-mode=:
+#+BEGIN_SRC emacs-lisp
+  (use-package markdown-mode
+    :commands (markdown-mode gfm-mode)
+    :mode (("README\\.md\\'" . gfm-mode)
+           ("\\.md\\'" . markdown-mode)
+           ("\\.markdown\\'" . markdown-mode))
+    :init (setq markdown-command "multimarkdown"))
 #+END_SRC
 * Theme
 
@@ -397,7 +527,7 @@ Transparent background for terminal emulator:
 
 Start emacs frame full-screen:
 #+BEGIN_SRC emacs-lisp
-  (setq initial-frame-alist '((top . 0) (left . 0) (width . 177) (height . 53)))
+  (add-to-list 'default-frame-alist '(fullscreen . maximized))
 #+END_SRC
 
 * Shell
@@ -456,6 +586,17 @@ Maximize window temporarily with <s-S-return>:
   (global-set-key [(super shift return)] 'toggle-maximize-buffer) 
 #+END_SRC
 
+Smarter =M-x=:
+#+BEGIN_SRC emacs-lisp
+;; M-x with recently/frequently used commands
+(use-package smex)
+(global-set-key (kbd "M-x") 'smex)
+#+END_SRC
+
+C-j in pre-emacs 24 stood for newline-and-indent:
+#+BEGIN_SRC emacs-lisp
+(global-set-key (kbd "C-j") #'newline-and-indent)
+#+END_SRC
 * Aliases
 
 Respond with =y/n= to prompts:
