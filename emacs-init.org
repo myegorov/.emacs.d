@@ -597,6 +597,24 @@ C-j in pre-emacs 24 stood for newline-and-indent:
 #+BEGIN_SRC emacs-lisp
 (global-set-key (kbd "C-j") #'newline-and-indent)
 #+END_SRC
+
+restore paredit's C-M-k to kill sexp
+#+BEGIN_SRC emacs-lisp
+;; If you want the keybinding to override all minor modes that may also bind
+;; the same key, use the `bind-key*' form:
+;;
+;;   (bind-key* "<C-return>" 'other-window)
+
+;; To bind multiple keys in a `bind-key*' way (to be sure that your bindings
+;; will not be overridden by other modes), you may use `bind-keys*' macro:
+;;
+;;    (bind-keys*
+;;     ("C-o" . other-window)
+;;     ("C-M-n" . forward-page)
+;;     ("C-M-p" . backward-page))
+(bind-key* "C-M-k" 'kill-sexp)
+#+END_SRC
+
 * Aliases
 
 Respond with =y/n= to prompts:
